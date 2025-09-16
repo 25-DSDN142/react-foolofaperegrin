@@ -2,6 +2,7 @@
 /* load images here */
 function prepareInteraction() {
   //bgImage = loadImage('/images/background.png');
+  // Sand simulation will be initialized when first needed
 }
 
 function drawInteraction(faces, hands) {
@@ -25,13 +26,39 @@ function drawInteraction(faces, hands) {
     Start drawing on the hands here
     */
 
-    fill(225, 225, 0);
-    ellipse(indexFingerTipX, indexFingerTipY, 30, 30);
+    fill(225, 0, 255);
+    ellipse(indexFingerTipX, indexFingerTipY, 30, 60);
+    ellipse(indexFingerTipX, indexFingerTipY, 60, 30);
+    fill(255, 255, 255);
+    ellipse(indexFingerTipX, indexFingerTipY, 10, 10);
 
     // drawPoints(hand)
 
-    //fingerPuppet(indexFingerTipX, indexFingerTipY);
-
+    fingerPuppet(indexFingerTipX, indexFingerTipY);
+    
+    // Spawn sand from hand position (if sand simulation is available)
+    if (typeof spawnSandFromHandPosition === 'function') {
+      // Throttle sand spawning to every 3 frames to prevent performance issues
+      if (frameCount % 3 === 0) {
+        // Use different sand types based on hand position or gesture
+        let sandType = 1; // Default sand
+        
+        // Spawn different types based on hand position
+        if (indexFingerTipY < 200) {
+          sandType = 11; // Plants in top area
+        } else if (indexFingerTipY > 500) {
+          sandType = 18; // Buildings in bottom area
+        } else if (indexFingerTipX < 400) {
+          sandType = 10; // Water on left side
+        } else if (indexFingerTipX > 800) {
+          sandType = 20; // Fire on right side
+        } else {
+          sandType = Math.floor(random(1, 9)); // Random sand colors in middle
+        }
+        
+        spawnSandFromHandPosition(indexFingerTipX, indexFingerTipY, sandType);
+      }
+    }
     //chameleonHandPuppet(hand)
 
     /*
@@ -40,6 +67,11 @@ function drawInteraction(faces, hands) {
   }
   // You can make addtional elements here, but keep the hand drawing inside the for loop. 
   //------------------------------------------------------
+  
+  // Draw sand simulation (if available)
+  if (typeof drawSandSimulation === 'function') {
+    drawSandSimulation();
+  }
 }
 
 

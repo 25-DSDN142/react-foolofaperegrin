@@ -25,8 +25,10 @@ const performancePresets = {
   high: { skipFrames: 1, targetFPS: 60}
 };
 
-skipFrames = performancePresets[performanceMode].skipFrames;
-targetFPS = performancePresets[performanceMode].targetFPS;
+// Use default performance mode if not yet defined
+let currentPerformanceMode = typeof performanceMode !== 'undefined' ? performanceMode : 'high';
+skipFrames = performancePresets[currentPerformanceMode].skipFrames;
+targetFPS = performancePresets[currentPerformanceMode].targetFPS;
 
 
 
@@ -39,47 +41,65 @@ let modelsReady = false;
 let videoReady = false;
 let firstDetection = false;
 
+console.log("Variables initialized");
+
 // ----=  Global functions  =----
+console.log("About to define loadingScreen function");
 
 // Loading screen display
 function loadingScreen() {
-  push();
-  background(30);
-  fill(255);
-  textAlign(CENTER, CENTER);
-  textSize(20);
-  text("Initialising...", width/2, height/2);
-  pop();
+  console.log("loadingScreen called");
+  if (typeof push === 'function' && typeof width !== 'undefined' && typeof height !== 'undefined') {
+    push();
+    background(30);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(20);
+    text("Initialising...", width/2, height/2);
+    pop();
+  } else {
+    console.log("p5.js functions or canvas not available yet");
+  }
 }
+
+console.log("loadingScreen function defined");
 
 // Loading animation for draw loop
 function showLoadingAnimation() {
-  background(30);
-  fill(255);
-  textAlign(CENTER, CENTER);
-  textSize(20);
-  textFont('Verdana');
-  
-  if (!videoReady) {
-    text("Loading camera...", width/2, height/2);
+  console.log("showLoadingAnimation called");
+  if (typeof background === 'function' && typeof width !== 'undefined' && typeof height !== 'undefined') {
+    background(30);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(20);
+    textFont('Verdana');
+    
+    if (!videoReady) {
+      text("Loading camera...", width/2, height/2);
+    } else {
+      text("Loading ML5 models...", width/2, height/2);
+      textSize(14);
+      text("Move your hand or face in front of camera", width/2, height/2 + 30);
+    }
+    
+    // Simple animated dots
+    let dots = "";
+    let numDots = floor(millis() / 500) % 4;
+    for (let i = 0; i < numDots; i++) {
+      dots += ".";
+    }
+    textSize(20);
+    text(dots, width/2 + 100, height/2);
   } else {
-    text("Loading ML5 models...", width/2, height/2);
-    textSize(14);
-    text("Move your hand or face in front of camera", width/2, height/2 + 30);
+    console.log("p5.js functions or canvas not available in showLoadingAnimation");
   }
-  
-  // Simple animated dots
-  let dots = "";
-  let numDots = floor(millis() / 500) % 4;
-  for (let i = 0; i < numDots; i++) {
-    dots += ".";
-  }
-  textSize(20);
-  text(dots, width/2 + 100, height/2);
 }
+
+console.log("showLoadingAnimation function defined");
 
 // Detect which mode we're in
 function detectMode() {
+  console.log("detectMode called");
   let path = window.location.pathname;
 
   if (path.includes('HandTracker')) {
@@ -95,14 +115,20 @@ function detectMode() {
 
 }
 
+console.log("detectMode function defined");
+
 // Video loaded callback
+console.log("About to define videoLoaded function");
 function videoLoaded() {
   console.log("Video loaded!");
   videoReady = true;
   
+  console.log("Detecting mode...");
   let mode = detectMode();
+  console.log("Mode detected:", mode);
   
   if (mode === 'hands' || mode === 'both') {
+    console.log("Setting up hand detection...");
     if (typeof handPose !== 'undefined') {
       handPose.detectStart(video, (results) => {
         // Use the shared detectionFrame variable
@@ -111,10 +137,14 @@ function videoLoaded() {
         }
       });
       connections = handPose.getConnections();
+      console.log("Hand detection setup complete");
+    } else {
+      console.log("handPose not available");
     }
   }
   
   if (mode === 'face' || mode === 'both') {
+    console.log("Setting up face detection...");
     if (typeof faceMesh !== 'undefined') {
       faceMesh.detectStart(video, (results) => {
         // Use the shared detectionFrame variable
@@ -122,21 +152,32 @@ function videoLoaded() {
           gotFaces(results);
         }
       });
+      console.log("Face detection setup complete");
+    } else {
+      console.log("faceMesh not available");
     }
   }
 
+  console.log("Creating painting buffer...");
   // Create painting buffer
-  painting = createGraphics(CaptureWidth, CaptureHeight);
+  let canvasWidth = typeof CaptureWidth !== 'undefined' ? CaptureWidth : 1280;
+  let canvasHeight = typeof CaptureHeight !== 'undefined' ? CaptureHeight : 720;
+  painting = createGraphics(canvasWidth, canvasHeight);
   painting.colorMode(HSB);
   painting.clear();
+  console.log("Painting buffer created");
 }
 
+console.log("videoLoaded function defined");
+
 // Reset frame counter when switching modes
+console.log("About to define resetDetectionFrame function");
 function resetDetectionFrame() {
   detectionFrame = 0;
 }
+console.log("resetDetectionFrame function defined");
 
-
+console.log("About to define gotFaces function");
 // Callback functions with safety checks
 function gotFaces(results) {
   if (typeof faces !== 'undefined') {
@@ -147,7 +188,9 @@ function gotFaces(results) {
     }
   }
 }
+console.log("gotFaces function defined");
 
+console.log("About to define gotHands function");
 function gotHands(results) {
   if (typeof hands !== 'undefined') {
     hands = results;
@@ -157,35 +200,48 @@ function gotHands(results) {
     }
   }
 }
+console.log("gotHands function defined");
 
+console.log("About to define isSystemReady function");
 // Check if system is ready
 function isSystemReady() {
   return videoReady && firstDetection;
 }
+console.log("isSystemReady function defined");
 
+console.log("About to define initializeVideo function");
 // Initialize video capture
 function initializeVideo() {
-  if (webCam) {
+  let useWebCam = typeof webCam !== 'undefined' ? webCam : true;
+  let flipVideoSetting = typeof flipVideo !== 'undefined' ? flipVideo : true;
+  let canvasWidth = typeof CaptureWidth !== 'undefined' ? CaptureWidth : 1280;
+  let canvasHeight = typeof CaptureHeight !== 'undefined' ? CaptureHeight : 720;
+  let videoFileToUse = typeof videoFile !== 'undefined' ? videoFile : "hands1.mov";
+  
+  if (useWebCam) {
     // Create the webcam video and hide it
-    video = createCapture(VIDEO, {flipped: flipVideo}, videoLoaded);
-    video.size(CaptureWidth, CaptureHeight);
+    video = createCapture(VIDEO, {flipped: flipVideoSetting}, videoLoaded);
+    video.size(canvasWidth, canvasHeight);
     video.hide();
   } else {
-    video = createVideo(videoFile, videoLoaded);
+    video = createVideo(videoFileToUse, videoLoaded);
     video.volume(0);
     video.loop();
     video.play();
-    video.size(CaptureWidth, CaptureHeight);
+    video.size(canvasWidth, canvasHeight);
     video.hide();
   }
 }
+console.log("initializeVideo function defined");
 
+console.log("About to define gesture detection functions");
 // ----=  GESTURE / EXPRESSION DETECTION  =----
 
 // detectHandGesture(hand) returns "Pinch", "Peace", "Thumbs Up", "Pointing", "Open Palm", or "Fist"
 // detectFaceExpression(face) returns "Surprised", "Neutral", or "Smiling"
 
 // Add gesture detection function
+console.log("About to define detectHandGesture function");
 function detectHandGesture(hand) {
   if (!hand || hand.confidence < 0.7) return null;
   
@@ -255,7 +311,9 @@ function detectHandGesture(hand) {
   
   return null;
 }
+console.log("detectHandGesture function defined");
 
+console.log("About to define detectFaceExpression function");
 // Simple face expression detection
 function detectFaceExpression(face) {
   if (!face) return null;
@@ -273,11 +331,12 @@ function detectFaceExpression(face) {
     return "Smiling";
   }
 }
+console.log("detectFaceExpression function defined");
 
-
-
+console.log("About to define UI system functions");
 // ----= UI SYSTEM FUNCTIONS =----
 
+console.log("About to define setupUI function");
 function setupUI() {
   console.log("UI initialized");
   // Detect which page we're on based on the URL
@@ -292,7 +351,9 @@ function setupUI() {
   }
 
 }
+console.log("setupUI function defined");
 
+console.log("About to define drawUI function");
 function drawUI() {
   if (!uiVisible) return;
   
@@ -366,7 +427,9 @@ function drawUI() {
   text("Press 'S' to save a screenshot", width - 10, height - 20);
   pop();
 }
+console.log("drawUI function defined");
 
+console.log("About to define navigation functions");
 // Navigation function
 function navigateToPage(page) {
   // Don't navigate if already on selected page
@@ -380,7 +443,9 @@ function navigateToPage(page) {
   resetDetectionFrame();
   window.location.href = page;
 }
+console.log("navigateToPage function defined");
 
+console.log("About to define button functions");
 // Button drawing function 
 function drawButton(label, x, y, w, h, isActive, onClick) {
   push();
@@ -415,7 +480,9 @@ function drawButton(label, x, y, w, h, isActive, onClick) {
   
   pop();
 }
+console.log("drawButton function defined");
 
+console.log("About to define drawToggle function");
 // Toggle switch drawing - unchanged
 function drawToggle(label, x, y, isOn, onClick) {
   push();
@@ -458,7 +525,9 @@ function drawToggle(label, x, y, isOn, onClick) {
   
   pop();
 }
+console.log("drawToggle function defined");
 
+console.log("About to define debug functions");
 // ----=  Debug info  =----
 
 function drawDebugInfo() {
@@ -599,7 +668,9 @@ function drawDebugInfo() {
   
   pop();
 }
+console.log("drawDebugInfo function defined");
 
+console.log("About to define clearPainting function");
 // Clear painting canvas
 function clearPainting() {
   if (painting) {
@@ -607,9 +678,9 @@ function clearPainting() {
     console.log("Painting cleared");
   }
 }
+console.log("clearPainting function defined");
 
-
-
+console.log("About to define event handlers");
 // Mouse click handling
 function mousePressed() {
   if (!window.uiButtons) return;
@@ -623,10 +694,17 @@ function mousePressed() {
     }
   }
   
+  // Handle sand simulation clicks (if available)
+  if (typeof handleSandSimulationClick === 'function') {
+    handleSandSimulationClick(mouseX, mouseY);
+  }
+  
   // Clear buttons array for next frame
   window.uiButtons = [];
 }
+console.log("mousePressed function defined");
 
+console.log("About to define keyPressed function");
 // Keyboard shortcuts
 function keyPressed() {
   // Hide/show UI
@@ -657,8 +735,15 @@ function keyPressed() {
   if (key === '!') {
     saveCanvas('ml5-capture-' + frameCount, 'png');
   }
+  
+  // Handle sand simulation keyboard controls (if available)
+  if (typeof handleSandSimulationKeyPress === 'function') {
+    handleSandSimulationKeyPress(key);
+  }
 }
+console.log("keyPressed function defined");
 
+console.log("About to define checks function");
 // start of draw() loop
 function checks() {
   // Check if system is ready
@@ -668,8 +753,11 @@ function checks() {
   }
 
   // Draw the video
-  if (flipVideo) {
-    if (webCam) {
+  let flipVideoSetting = typeof flipVideo !== 'undefined' ? flipVideo : true;
+  let useWebCam = typeof webCam !== 'undefined' ? webCam : true;
+  
+  if (flipVideoSetting) {
+    if (useWebCam) {
       image(video, 0, 0, width, height);
     } else {
       push();
@@ -684,3 +772,6 @@ function checks() {
   
   return true; // Signal that system is ready
 }
+console.log("checks function defined");
+
+console.log("All functions defined - initialization complete!");

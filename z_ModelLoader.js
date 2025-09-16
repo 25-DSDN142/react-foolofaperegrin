@@ -41,6 +41,14 @@ function setup() {
   initializeVideo();
   setupUI();
 
+  // Initialize sand simulation (if available)
+  if (typeof setupSandSimulation === 'function') {
+    console.log("Setting up sand simulation...");
+    setupSandSimulation();
+    console.log("Sand simulation setup complete!");
+  } else {
+    console.log("setupSandSimulation function not available");
+  }
 }
 
 function draw() {
@@ -59,6 +67,10 @@ function draw() {
 
   drawInteraction(faces, confidentlyHands);
 
+  // Draw sand simulation (if available)
+  if (typeof drawSandSimulation === 'function') {
+    drawSandSimulation();
+  }
 
   // Draw painting overlay
   image(painting, 0, 0);
