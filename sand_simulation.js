@@ -4,7 +4,7 @@
 // Full screen overlay (1280x720) with 4px cells for hand tracking integration
 
 // ===== GLOBAL VARIABLES =====
-let cellSize = 10; // Larger cells for better visibility
+let cellSize = 8; // Larger cells for better visibility
 let sandSimWidth = 1280; // Full webcam width
 let sandSimHeight = 720; // Full webcam height
 let gridWidth = sandSimWidth / cellSize;   // 320 cells
@@ -29,8 +29,8 @@ let plantcolor = [50, 200, 50];
 let buildingcolor = [100, 100, 100];
 
 // ===== SIMULATION PARAMETERS =====
-let windIntensity = 0.1;
-let plantGrowthRate = 0.001;
+let windIntensity = 1.1;
+let plantGrowthRate = 0.01;
 let fireSpreadRate = 0.05;
 let frameCounter = 0;
 
@@ -81,6 +81,11 @@ function setupSandGrid() {
 }
 
 function fallingSand() {
+  // Safety check - ensure grid is initialized
+  if (!sandGrid || sandGrid.length === 0 || !sandGrid[0]) {
+    return;
+  }
+  
   // Main physics simulation - runs from bottom to top
   for (let y = gridHeight - 2; y >= 0; y--) {
     for (let x = 0; x < gridWidth; x++) {
@@ -177,6 +182,21 @@ function fallingSand() {
             sandGrid[x][y] = 0;
             sandGrid[x + direction][y+1] = temp;
           }
+          //Sand sinks in water
+          else if (y < gridHeight - 1 && sandGrid[x][y+1] == 10) {
+            
+            
+            sandGrid[x][y+1] = sandGrid[x][y];;
+            sandGrid[x][y] = 10;
+          } else if (y < gridHeight - 1 && x > 0 && sandGrid[x-1][y+1] == 10) {
+            
+            sandGrid[x-1][y+1] = sandGrid[x][y];;
+            sandGrid[x][y] = 10;
+          } else if (y < gridHeight - 1 && x < gridWidth - 1 && sandGrid[x+1][y+1] == 10) {
+            
+            sandGrid[x+1][y+1] = sandGrid[x][y];;
+            sandGrid[x][y] = 10;
+          }
         }
       }
 
@@ -196,6 +216,22 @@ function fallingSand() {
             sandGrid[x + direction][y] = sandGrid[x][y];
             plantColorGrid[x + direction][y] = plantColorGrid[x][y];
           }
+
+          
+        }
+
+      }
+      //Plants spawn on sand
+      if (sandGrid[x][y] < 10 && sandGrid[x][y] > 0 && y > 0 && sandGrid[x][y-1] == 10) {
+        let growChance = random(0, 1);
+        if (growChance < 0.5) {
+        sandGrid[x][y-1] = Math.floor(random(11, 18));
+        plantColorGrid[x][y-1] = color(
+          random(50, 150), 
+          random(150, 255), 
+          random(50, 150),
+          160
+        );
         }
       }
     }
@@ -203,16 +239,7 @@ function fallingSand() {
 }
 
 function drawSand() {
-    noStroke();
-  let sC = color(sandcolor[0], sandcolor[1], sandcolor[2], 180); // Semi-transparent
-  let sC2 = color(sandcolor2[0], sandcolor2[1], sandcolor2[2], 180);
-  let sC3 = color(sandcolor3[0], sandcolor3[1], sandcolor3[2], 180);
-  let sC4 = color(sandcolor4[0], sandcolor4[1], sandcolor4[2], 180);
-  let sC5 = color(sandcolor5[0], sandcolor5[1], sandcolor5[2], 180);
-  let wC = color(watercolor[0], watercolor[1], watercolor[2], 200); // Less transparent water
-  let fC = color(firecolor[0], firecolor[1], firecolor[2], 220); // Less transparent fire
-  let pC = color(plantcolor[0], plantcolor[1], plantcolor[2], 160); // More transparent plants
-  let bC = color(buildingcolor[0], buildingcolor[1], buildingcolor[2], 200); // Less transparent buildings
+  noStroke();
 
   for (let x = 0; x < gridWidth; x++) {
     for (let y = 0; y < gridHeight; y++) {
@@ -224,25 +251,25 @@ function drawSand() {
         if (sandGrid[x][y] >= 1 && sandGrid[x][y] <= 8) {
           // Sand particles with different colors
           switch(sandGrid[x][y]) {
-            case 1: fill(sC); break;
-            case 2: fill(sC2); break;
-            case 3: fill(sC3); break;
-            case 4: fill(sC4); break;
-            case 5: fill(sC5); break;
-            case 6: fill(lerpColor(sC, sC2, 0.5)); break;
-            case 7: fill(lerpColor(sC2, sC3, 0.5)); break;
-            case 8: fill(lerpColor(sC3, sC4, 0.5)); break;
+            case 1: fill(sandcolor[0], sandcolor[1], sandcolor[2], 180); break;
+            case 2: fill(sandcolor2[0], sandcolor2[1], sandcolor2[2], 180); break;
+            case 3: fill(sandcolor3[0], sandcolor3[1], sandcolor3[2], 180); break;
+            case 4: fill(sandcolor4[0], sandcolor4[1], sandcolor4[2], 180); break;
+            case 5: fill(sandcolor5[0], sandcolor5[1], sandcolor5[2], 180); break;
+            case 6: fill(lerpColor(color(sandcolor[0], sandcolor[1], sandcolor[2]), color(sandcolor2[0], sandcolor2[1], sandcolor2[2]), 0.5)); break;
+            case 7: fill(lerpColor(color(sandcolor2[0], sandcolor2[1], sandcolor2[2]), color(sandcolor3[0], sandcolor3[1], sandcolor3[2]), 0.5)); break;
+            case 8: fill(lerpColor(color(sandcolor3[0], sandcolor3[1], sandcolor3[2]), color(sandcolor4[0], sandcolor4[1], sandcolor4[2]), 0.5)); break;
           }
           rect(pixelX, pixelY, cellSize, cellSize);
         }
         else if (sandGrid[x][y] == 10) {
           // Water
-          fill(wC);
+          fill(watercolor[0], watercolor[1], watercolor[2], 200);
           rect(pixelX, pixelY, cellSize, cellSize);
         }
         else if (sandGrid[x][y] == 20) {
           // Fire
-          fill(fC);
+          fill(firecolor[0], firecolor[1], firecolor[2], 220);
           rect(pixelX, pixelY, cellSize, cellSize);
         }
         else if (sandGrid[x][y] >= 11 && sandGrid[x][y] <= 17) {
@@ -252,7 +279,7 @@ function drawSand() {
         }
         else if (sandGrid[x][y] == 18) {
           // Buildings
-          fill(bC);
+          fill(buildingcolor[0], buildingcolor[1], buildingcolor[2], 200);
           rect(pixelX, pixelY, cellSize, cellSize);
         }
       }
@@ -324,24 +351,6 @@ function spawnPlantAtPosition(x, y) {
 
 function spawnBuildingAtPosition(x, y) {
   spawnSandAtPosition(x, y, 18);
-}
-
-// ===== HAND TRACKING INTEGRATION =====
-
-function spawnSandFromHandPosition(handX, handY, sandType = 1) {
-  // Hand coordinates now directly map to sand simulation coordinates
-  // since sand simulation covers the full screen
-  if (handX >= 0 && handX <= sandSimWidth && handY >= 0 && handY <= sandSimHeight) {
-    spawnSandAtPosition(handX, handY, sandType);
-  }
-}
-
-function spawnWaterFromHandPosition(handX, handY) {
-  spawnSandFromHandPosition(handX, handY, 10);
-}
-
-function spawnFireFromHandPosition(handX, handY) {
-  spawnSandFromHandPosition(handX, handY, 20);
 }
 
 // ===== CLICK INTERACTION =====

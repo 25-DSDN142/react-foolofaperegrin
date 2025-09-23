@@ -12,17 +12,71 @@ function drawInteraction(faces, hands) {
   // for loop to capture if there is more than one hand on the screen. This applies the same process to all hands.
   for (let i = 0; i < hands.length; i++) {
     let hand = hands[i];
+    
+    let whatGesture = detectHandGesture(hand)
+    let isErasing = false; // Default to not erasing
+
+    if (whatGesture == "Open Palm") {
+      isErasing = true;
+    }
     if (showKeypoints) {
       drawPoints(hand)
       drawConnections(hand)
     }
     // console.log(hand);
+    
+    // === HAND VARIABLES ===
+    // Calculate hand center (using wrist as center point)
+    let handCenterX = hand.wrist.x;
+    let handCenterY = hand.wrist.y;
+    
+    // Get all finger tip positions
     let indexFingerTipX = hand.index_finger_tip.x;
     let indexFingerTipY = hand.index_finger_tip.y;
+    let middleFingerTipX = hand.middle_finger_tip.x;
+    let middleFingerTipY = hand.middle_finger_tip.y;
+    let ringFingerTipX = hand.ring_finger_tip.x;
+    let ringFingerTipY = hand.ring_finger_tip.y;
+    let pinkyFingerTipX = hand.pinky_finger_tip.x;
+    let pinkyFingerTipY = hand.pinky_finger_tip.y;
+    
+    //  hand size
+    let indexDist = Math.sqrt((indexFingerTipX - handCenterX) ** 2 + (indexFingerTipY - handCenterY) ** 2);
+    let middleDist = Math.sqrt((middleFingerTipX - handCenterX) ** 2 + (middleFingerTipY - handCenterY) ** 2);
+    let ringDist = Math.sqrt((ringFingerTipX - handCenterX) ** 2 + (ringFingerTipY - handCenterY) ** 2);
+    let pinkyDist = Math.sqrt((pinkyFingerTipX - handCenterX) ** 2 + (pinkyFingerTipY - handCenterY) ** 2);
+    
+        let handSize = Math.max(indexDist, middleDist, ringDist, pinkyDist);
+
+
     /*
     Start drawing on the hands here
+
     */
 
+
+
+    if (isErasing == false) {
+    spawnSandAtPosition(indexFingerTipX, indexFingerTipY, Math.floor(random(1, 9)));
+    }
+
+    if (isErasing == true) {
+      
+      
+      // Map hand size to brush size (minimum 2, maximum 8)
+      let eraserBrushSize = Math.floor(map(handSize, 30, 150, 2, 8));
+      eraserBrushSize = Math.max(2, Math.min(8, eraserBrushSize)); // Clamp between 2-8
+      
+      // Temporarily set brush size for erasing
+      let originalBrushSize = brushSize;
+      brushSize = eraserBrushSize;
+      
+      // Erase by spawning type 0 (empty) at hand center
+      spawnSandAtPosition(handCenterX, handCenterY, 0);
+      
+      // Restore original brush size
+      brushSize = originalBrushSize;
+    }
     // pinchCircle(hand)
     fill(225, 225, 0);
     ellipse(indexFingerTipX, indexFingerTipY, 30, 30);
@@ -57,6 +111,12 @@ function drawInteraction(faces, hands) {
     /*
     Start drawing on the face here
     */
+
+    checkIfMouthOpen(face);
+    if (isMouthOpen) {
+      text("blah blah", face.keypoints[287].x, face.keypoints[287].y)
+      spawnWaterAtPosition(face.keypoints[275].x, face.keypoints[287].y)
+    }
 
     // fill(225, 225, 0);
     // ellipse(leftEyeCenterX, leftEyeCenterY, leftEyeWidth, leftEyeHeight);
@@ -123,5 +183,22 @@ function drawPoints(feature) {
     circle(element.x, element.y, 5);
   }
   pop()
+
+}
+
+function checkIfMouthOpen(face) {
+
+  let upperLip = face.keypoints[13]
+  let lowerLip = face.keypoints[14]
+  // ellipse(lowerLip.x,lowerLip.y,20)
+  // ellipse(upperLip.x,upperLip.y,20)
+
+  let d = dist(upperLip.x, upperLip.y, lowerLip.x, lowerLip.y);
+  //console.log(d)
+  if (d < 10) {
+    isMouthOpen = false;
+  } else {
+    isMouthOpen = true;
+  }
 
 }

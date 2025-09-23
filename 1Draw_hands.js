@@ -5,6 +5,7 @@ function prepareInteraction() {
   // Sand simulation will be initialized when first needed
 }
 
+
 function drawInteraction(faces, hands) {
   // hands part
   // for loop to capture if there is more than one hand on the screen. This applies the same process to all hands.
@@ -36,29 +37,6 @@ function drawInteraction(faces, hands) {
 
     fingerPuppet(indexFingerTipX, indexFingerTipY);
     
-    // Spawn sand from hand position (if sand simulation is available)
-    if (typeof spawnSandFromHandPosition === 'function') {
-      // Throttle sand spawning to every 3 frames to prevent performance issues
-      if (frameCount % 3 === 0) {
-        // Use different sand types based on hand position or gesture
-        let sandType = 1; // Default sand
-        
-        // Spawn different types based on hand position
-        if (indexFingerTipY < 200) {
-          sandType = 11; // Plants in top area
-        } else if (indexFingerTipY > 500) {
-          sandType = 18; // Buildings in bottom area
-        } else if (indexFingerTipX < 400) {
-          sandType = 10; // Water on left side
-        } else if (indexFingerTipX > 800) {
-          sandType = 20; // Fire on right side
-        } else {
-          sandType = Math.floor(random(1, 9)); // Random sand colors in middle
-        }
-        
-        spawnSandFromHandPosition(indexFingerTipX, indexFingerTipY, sandType);
-      }
-    }
     //chameleonHandPuppet(hand)
 
     /*
