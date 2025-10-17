@@ -1,70 +1,91 @@
-// ===== STANDALONE SAND SIMULATION =====
-// Refactored from music_starter.js - removed all music dependencies
-// Ready for integration with hand tracking coordinates
-// Full screen overlay (1280x720) with 4px cells for hand tracking integration
+// ===== SAND SIMULATION =====
+// Refactored from music_starter.js 
 
-// ===== GLOBAL VARIABLES =====
-let cellSize = 8; // Larger cells for better visibility
-let sandSimWidth = 1280; // Full webcam width
-let sandSimHeight = 720; // Full webcam height
-let gridWidth = sandSimWidth / cellSize;   // 320 cells
-let gridHeight = sandSimHeight / cellSize; // 180 cells
 
+//GLOBALS
+let cellSize = 12; 
+let sandSimWidth = 1280; 
+let sandSimHeight = 720; 
+let gridWidth = sandSimWidth / cellSize;  
+let gridHeight = sandSimHeight / cellSize; 
+
+//arrays
 let sandGrid = [];
 let plantColorGrid = [];
 
-// Sand simulation position on screen (full screen overlay)
-let sandSimX = 0; // Full width overlay
-let sandSimY = 0; // Full height overlay
+
+//Simulation variables
+let fireSpreadRate = 0.05;
+let plantGrowthRate = 0.002;
+
+
+//images
+
 
 // ===== COLOR DEFINITIONS =====
-let sandcolor = [194, 178, 128];
-let sandcolor2 = [210, 180, 140];
-let sandcolor3 = [180, 160, 120];
-let sandcolor4 = [160, 140, 100];
-let sandcolor5 = [140, 120, 80];
-let watercolor = [100, 150, 255];
-let firecolor = [255, 100, 0];
-let plantcolor = [50, 200, 50];
-let buildingcolor = [100, 100, 100];
+let sandcolor = 'rgb(233, 221, 172)';   // Color 1
+let sandcolor2 = 'rgba(238, 223, 207, 0.83)';  // Color 2
+let sandcolor3 = 'rgb(212, 178, 143)';   // Color 3
+let sandcolor4 = 'rgb(255, 224, 208)';    // Color 4
+let sandcolor5 = 'rgb(230, 211, 165)';    // Color 5
+let sandcolor6 = 'rgb(255, 236, 183)';    // Color 6
+let sandcolor7 = 'rgb(171, 226, 213)';    // Color 7
+let sandcolor8 = 'rgb(255, 230, 0)';    // Color 8
+let sandcolor9 = 'rgb(194, 230, 235)';    // solid structure
+let sandcolor10 = 'rgba(150, 219, 247, 0.74)';    // water
+let blockColor = 'rgba(212, 211, 177, 0.27)';  
+let blockColor2 = 'rgba(0, 0, 0, 0.12)';    // block
+let blockColor3 = 'rgba(228, 230, 213, 0.51)';    // block
+let blockColor4 = 'rgba(252, 254, 114, 0.52)';    // block
+let fireColor = 'rgba(255, 0, 0, 0.29)';    // fire
+let fireColor2 = 'rgba(255, 149, 0, 0.28)';    // fire
+let fireColor3 = 'rgba(255, 242, 196, 0.17)';    // fire
 
-// ===== SIMULATION PARAMETERS =====
-let windIntensity = 1.1;
-let plantGrowthRate = 0.01;
-let fireSpreadRate = 0.05;
-let frameCounter = 0;
+// Plant colors
+let plantColors = [
+  'rgba(68, 49, 22, 0.63)',   //wood, array no. 0, type 11
+  'rgba(143, 184, 143, 0.36)',   
+  'rgba(121, 212, 113, 0.22)',   
+  'rgba(6, 121, 102, 0.45)',  
+  'rgba(73, 122, 99, 0.23)',    
+  'rgba(121, 202, 151, 0.2)',
+  'rgba(236, 255, 154, 0.86)',
+  'rgb(255, 162, 0)'
+];
 
-// Click interaction variables
-let currentSandType = 1; // 1-8 for different sand colors, 10 for water, 20 for fire
-let brushSize = 2; // Radius of brush when clicking
+
+
+//images
+let flameImage;
+let bareImage;
+let stickImage;
+let leafImage;
+let leaf2Image;
+
+// brush
+let currentSandType = 1; // 1-8 sand, 10 for water, 20 for fire
+let brushSize = 1; // Radius of sand spawning
 
 // ===== P5.JS INTEGRATION FUNCTIONS =====
 function setupSandSimulation() {
-  console.log("setupSandSimulation() called");
+ 
   setupSandGrid();
-  console.log("Sand simulation initialized - Size:", sandSimWidth + "x" + sandSimHeight);
-  console.log("Sand simulation position:", sandSimX + ", " + sandSimY);
-  console.log("Grid size:", gridWidth + "x" + gridHeight, "Cell size:", cellSize);
+  
+  // Load images
+  flameImage = loadImage('/images/flame.png');
+  bareImage = loadImage('/images/bare.png');
+  stickImage = loadImage('/images/stick.png');
+  leafImage = loadImage('/images/leaf.png');
+  leaf2Image = loadImage('/images/leaf2.png');
+  
 }
 
 function drawSandSimulation() {
-  // Draw sand simulation as full screen overlay
-  if (frameCount % 60 === 0) { // Log every 60 frames to avoid spam
-    console.log("drawSandSimulation() called - frame", frameCount);
-  }
-  push();
-  translate(sandSimX, sandSimY);
-  
-  // Update simulation
+  //simulate sand
   fallingSand();
-  
-  // Render all particles with transparency
+  // draw each particle function
   drawSand();
-  
-  pop();
-  
-  frameCounter++;
-}
+  }
 
 // ===== CORE SIMULATION FUNCTIONS =====
 
@@ -90,7 +111,7 @@ function fallingSand() {
   for (let y = gridHeight - 2; y >= 0; y--) {
     for (let x = 0; x < gridWidth; x++) {
 
-      // Buildings destroyed by water
+      /*// Buildings destroyed by water
       if (sandGrid[x][y] == 18){
         if (y > 0 && sandGrid[x][y-1] == 10){
           sandGrid[x][y] = 10;
@@ -104,7 +125,7 @@ function fallingSand() {
         else if (x < gridWidth - 1 && sandGrid[x+1][y] == 10){
           sandGrid[x][y] = 10;
         }
-      } 
+      } */
 
       // Fire simulation
       if (sandGrid[x][y] == 20){
@@ -200,88 +221,272 @@ function fallingSand() {
         }
       }
 
-      // Plant growth
-      if (sandGrid[x][y] >= 11 && sandGrid[x][y] <= 17) {
-        // Plants grow upward
+        // Plant growth 
+        if (sandGrid[x][y] >= 11 && sandGrid[x][y] <= 16) {
+        
+        
         if (y > 0 && sandGrid[x][y-1] == 0 && random() < plantGrowthRate) {
-          sandGrid[x][y-1] = sandGrid[x][y];
-          plantColorGrid[x][y-1] = plantColorGrid[x][y];
+          let nextType = sandGrid[x][y] + 1; // Spawn next plant type
+          if (nextType <= 17) {
+            sandGrid[x][y-1] = nextType;
+            plantColorGrid[x][y-1] = color(
+              random(50, 150), 
+              random(150, 255), 
+              random(50, 150),
+              160
+            );
+          }
         }
         
-        // Plants spread horizontally
+        // Plants spread 
         if (random() < plantGrowthRate * 0.5) {
           let direction = random() < 0.5 ? -1 : 1;
           if (x + direction >= 0 && x + direction < gridWidth && 
-              sandGrid[x + direction][y] == 0) {
-            sandGrid[x + direction][y] = sandGrid[x][y];
+              sandGrid[x + direction][y] == sandGrid[x][y]-1) {
+            sandGrid[x + direction][y] = sandGrid[x][y]+1;
             plantColorGrid[x + direction][y] = plantColorGrid[x][y];
           }
-
-          
         }
 
       }
+      
+     
       //Plants spawn on sand
       if (sandGrid[x][y] < 10 && sandGrid[x][y] > 0 && y > 0 && sandGrid[x][y-1] == 10) {
         let growChance = random(0, 1);
-        if (growChance < 0.5) {
-        sandGrid[x][y-1] = Math.floor(random(11, 18));
-        plantColorGrid[x][y-1] = color(
-          random(50, 150), 
-          random(150, 255), 
-          random(50, 150),
-          160
-        );
+        if (growChance < 0.2) {
+          sandGrid[x][y-1] = Math.floor(random(11, 16));
+          plantColorGrid[x][y-1] = color(
+            random(50, 150), 
+            random(150, 255), 
+            random(50, 150),
+            160
+          );
         }
       }
+
+      // Plant end in flower
+      if (sandGrid[x][y] > 12 && sandGrid[x][y] < 16) { 
+        let endBranch = random();
+        if (endBranch < 0.8) {
+          sandGrid[x][y] = 11;
+        } else {
+          sandGrid[x][y] = 17;
+          //console.log("sandgrid = 17, flower");
+        }
+      }
+
+      let growthChance = random(0, 1);
+      if (growthChance < 0.1) {
+        
+      if (sandGrid[x][y] == 13 && y > 0 && y < (gridHeight - 10) && x > 4 && x < gridWidth - 4 && sandGrid[x][y-1] != 17 &&
+      sandGrid[x+1][y-1] != 17) {
+        sandGrid[x][y-1] = 15;
+        sandGrid[x-1][y-1] = 14;  
+      }
+    } else if (growthChance < 0.2) {
+
+      if (sandGrid[x][y] == 11 && y > 0 && y < (gridHeight - 10) && x > 4 && x < gridWidth - 4 && sandGrid[x][y-1] != 17 &&
+      sandGrid[x+1][y-1] != 17) {
+        sandGrid[x][y-1] = 12;
+        sandGrid[x+1][y-1] = 15; 
+      }
+      else if (growthChance < 0.3) {
+      if (sandGrid[x][y] == 12 && y > 0 && y < (gridHeight - 10) && x > 4 && x < gridWidth - 4 && sandGrid[x][y-1] != 17 &&
+      sandGrid[x+1][y-1] != 17) {
+        sandGrid[x][y-1] = 16;
+        sandGrid[x+1][y-1] = 13; 
+      }
+      }
     }
+  
+    if (sandGrid[x][y] == 17) {
+      sandGrid[x][y] = 17;
+    }
+
+  }
   }
 }
 
 function drawSand() {
+  let sC = color(sandcolor);
+  let sC2 = color(sandcolor2);
+  let sC3 = color(sandcolor3);
+  let sC4 = color(sandcolor4);
+  let sC5 = color(sandcolor5);
+  let sC6 = color(sandcolor6);
+  let sC7 = color(sandcolor7);
+  let sC8 = color(sandcolor8);
+  let sC9 = color(sandcolor9);
+  let sC10 = color(sandcolor10);
+  
+
+  let colorDriver = 0.5; 
+  
   noStroke();
 
-  for (let x = 0; x < gridWidth; x++) {
-    for (let y = 0; y < gridHeight; y++) {
-      if (sandGrid[x][y] != 0) {
-        let pixelX = x * cellSize;
-        let pixelY = y * cellSize;
+  for (let y = 0; y < gridHeight; y++) {
+    for (let x = 0; x < gridWidth; x++) {
+      let screenX = x * cellSize;
+      let screenY = y * cellSize;
+      
+      if (sandGrid[x][y] === 1) {
+        let sandcolorLerp = lerpColor(sC, sC2, colorDriver);
+        fill(sandcolorLerp);  
+        rect(screenX, screenY, cellSize, cellSize);
+        fill (sandcolor);
+        rect(screenX, screenY, 0.5*cellSize, 0.5*cellSize);
+      } else if (sandGrid[x][y] === 2) {
+        let sandcolorLerp2 = lerpColor(sC2, sC3, colorDriver);
+        fill(sandcolorLerp2); 
+        rect(screenX, screenY, cellSize, cellSize);
+        fill (sandcolor2);
+        rect(screenX+(0.2*cellSize), screenY-(0.1*cellSize), 0.5*cellSize, 0.5*cellSize);
+      } else if (sandGrid[x][y] === 3) {
+        let sandcolorLerp3 = lerpColor(sC3, sC4, colorDriver);
+        fill(sandcolorLerp3); 
+        rect(screenX, screenY, cellSize, cellSize);
+        fill (sandcolor3);
+        rect(screenX, screenY, 0.5*cellSize, 0.5*cellSize);
+      } else if (sandGrid[x][y] === 4) {
+        let sandcolorLerp4 = lerpColor(sC4, sC5, colorDriver);
+        fill(sandcolorLerp4); 
+        rect(screenX, screenY, cellSize, cellSize);
+        fill (sandcolor4);
+        rect(screenX, screenY, 0.5*cellSize, 0.5*cellSize);
+      } else if (sandGrid[x][y] === 5) {
+        let sandcolorLerp5 = lerpColor(sC5, sC6, colorDriver);
+        fill(sandcolorLerp5); 
+        rect(screenX, screenY, cellSize, cellSize);
+        fill (sandcolor5);
+        rect(screenX, screenY, 0.5*cellSize, 0.5*cellSize);
+      } else if (sandGrid[x][y] === 6) {
+        let sandcolorLerp6 = lerpColor(sC6, sC7, colorDriver);
+        fill(sandcolorLerp6); 
+        rect(screenX, screenY, cellSize, cellSize);
+      } else if (sandGrid[x][y] === 7) {
+        let sandcolorLerp7 = lerpColor(sC7, sC8, colorDriver);
+        fill(sandcolorLerp7); 
+        rect(screenX, screenY, cellSize, cellSize);
+      } else if (sandGrid[x][y] === 8) {
+        let sandcolorLerp8 = lerpColor(sC8, sC9, colorDriver);
+        fill(sandcolorLerp8); 
+        rect(screenX, screenY, cellSize, cellSize);
+      } else if (sandGrid[x][y] === 9) {
+        fill(blockColor3); // Ground!
+        rect(screenX, screenY, cellSize, cellSize);
+        fill(blockColor);
+        rect(screenX+(0.2*cellSize), screenY, 0.5*cellSize, cellSize);
+      } else if (sandGrid[x][y] === 10) { //WATER
+        fill(sandcolor10); 
+        rect(screenX, screenY, cellSize, cellSize);
+      } 
+      //PLANTS
+      else if (sandGrid[x][y] === 11) {
         
-        // Draw different particle types
-        if (sandGrid[x][y] >= 1 && sandGrid[x][y] <= 8) {
-          // Sand particles with different colors
-          switch(sandGrid[x][y]) {
-            case 1: fill(sandcolor[0], sandcolor[1], sandcolor[2], 180); break;
-            case 2: fill(sandcolor2[0], sandcolor2[1], sandcolor2[2], 180); break;
-            case 3: fill(sandcolor3[0], sandcolor3[1], sandcolor3[2], 180); break;
-            case 4: fill(sandcolor4[0], sandcolor4[1], sandcolor4[2], 180); break;
-            case 5: fill(sandcolor5[0], sandcolor5[1], sandcolor5[2], 180); break;
-            case 6: fill(lerpColor(color(sandcolor[0], sandcolor[1], sandcolor[2]), color(sandcolor2[0], sandcolor2[1], sandcolor2[2]), 0.5)); break;
-            case 7: fill(lerpColor(color(sandcolor2[0], sandcolor2[1], sandcolor2[2]), color(sandcolor3[0], sandcolor3[1], sandcolor3[2]), 0.5)); break;
-            case 8: fill(lerpColor(color(sandcolor3[0], sandcolor3[1], sandcolor3[2]), color(sandcolor4[0], sandcolor4[1], sandcolor4[2]), 0.5)); break;
-          }
-          rect(pixelX, pixelY, cellSize, cellSize);
+        push();
+        translate(screenX, screenY);
+        // Random rotation
+        let rotation = ((x * 7 + y * 13) % 60) - 30;
+        rotate(radians(rotation));
+        imageMode(CENTER);
+        image(bareImage, 0, 0, 5*cellSize, 5*cellSize);
+        pop();
+      } else if (sandGrid[x][y] == 12) {
+        
+        push();
+        translate(screenX, screenY);
+             
+        imageMode(CENTER);
+        image(leaf2Image, 0, 0, 3*cellSize, 3*cellSize);
+        pop();
+        
+      } else if (sandGrid[x][y] === 13) {
+       
+        push();
+        imageMode(CENTER);
+        
+        image(leafImage, screenX, screenY, 1.5*cellSize, 2.5*cellSize);
+        pop();
+        
+      } else if (sandGrid[x][y] === 14) {
+        
+        push();
+        imageMode(CENTER);
+        
+        image(leaf2Image, screenX, screenY, 5*cellSize, 5*cellSize);
+        pop();
+        
+      } else if (sandGrid[x][y] === 15) {
+        push();
+        imageMode(CENTER);
+        
+        image(leaf2Image, screenX, screenY, 4*cellSize, 5*cellSize);
+        pop();
+        
+      } else if (sandGrid[x][y] === 16) {
+        push();
+        imageMode(CENTER);
+        
+        image(leafImage, screenX, screenY, 7*cellSize, 7*cellSize);
+        pop();
+      }
+
+      //FLOWERS
+      else if (sandGrid[x][y] === 17) {
+        //console.log("Drawing flower");
+
+        push();
+        imageMode(CENTER);
+        
+        image(sakuraImage, screenX, screenY, 1.5*cellSize, 1.5*cellSize);
+        pop();
+        
+        /*fill(plantColors[6]);
+        ellipse(screenX, screenY, 2.5*cellSize, cellSize);
+        ellipse(screenX, screenY, cellSize, 2.5*cellSize);
+        fill(plantColors[7]);
+        ellipse(screenX, screenY, 0.5*cellSize, 0.5*cellSize);*/
+        
+        //image(sakuraImage, screenX, screenY, 2.5*cellSize, 2.5*cellSize);
+        
+      }
+
+      /*//CITY BUILDINGS
+      else if (sandGrid[x][y] === 18) {
+        fill(blockColor);
+        rect(screenX, screenY, 4*cellSize, 3*cellSize);
+        fill(2*blockColor);
+        rect(screenX, screenY, 5*cellSize, 3*cellSize);
+        fill(blockColor2);
+        rect(screenX, screenY, 0.5*cellSize, 0.5*cellSize);
+        let randomTwinkle = random(0, 1);
+        if (randomTwinkle < 0.1) {
+          fill(blockColor4);
+          ellipse(screenX, screenY, 0.4*cellSize, 0.4*cellSize);
         }
-        else if (sandGrid[x][y] == 10) {
-          // Water
-          fill(watercolor[0], watercolor[1], watercolor[2], 200);
-          rect(pixelX, pixelY, cellSize, cellSize);
-        }
-        else if (sandGrid[x][y] == 20) {
-          // Fire
-          fill(firecolor[0], firecolor[1], firecolor[2], 220);
-          rect(pixelX, pixelY, cellSize, cellSize);
-        }
-        else if (sandGrid[x][y] >= 11 && sandGrid[x][y] <= 17) {
-          // Plants
-          fill(plantColorGrid[x][y]);
-          rect(pixelX, pixelY, cellSize, cellSize);
-        }
-        else if (sandGrid[x][y] == 18) {
-          // Buildings
-          fill(buildingcolor[0], buildingcolor[1], buildingcolor[2], 200);
-          rect(pixelX, pixelY, cellSize, cellSize);
-        }
+      }*/
+
+      //FIRE
+      else if (sandGrid[x][y] === 20) {
+        let fireSize = 1.0; // Fixed fire size
+        let randomFireSize = random(0.9, 3);
+        push();
+        imageMode(CENTER);
+        
+        image(flameImage, screenX, screenY, 3*fireSize*cellSize, 3*randomFireSize*fireSize*2*cellSize);
+        pop();
+        
+        
+        
+        fill(fireColor2);
+        ellipse(screenX, screenY, fireSize*cellSize, randomFireSize*fireSize*6*cellSize);
+        fill(fireColor);
+        ellipse(screenX, screenY, fireSize*cellSize, randomFireSize*fireSize*4*cellSize);
+        fill(fireColor);
+        ellipse(screenX, screenY, fireSize*cellSize, randomFireSize*fireSize*1.5*cellSize);
+        fill(fireColor3);
+        ellipse(screenX, screenY, fireSize*cellSize, randomFireSize*fireSize*3*cellSize);
       }
     }
   }
@@ -334,62 +539,11 @@ function spawnFireAtPosition(x, y) {
   spawnSandAtPosition(x, y, 20);
 }
 
-function spawnPlantAtPosition(x, y) {
-  let gridX = Math.floor(x / cellSize);
-  let gridY = Math.floor(y / cellSize);
-  
-  if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
-    let plantType = Math.floor(random(11, 18));
-    sandGrid[gridX][gridY] = plantType;
-    plantColorGrid[gridX][gridY] = color(
-      random(50, 150), 
-      random(150, 255), 
-      random(50, 150)
-    );
-  }
-}
 
-function spawnBuildingAtPosition(x, y) {
-  spawnSandAtPosition(x, y, 18);
-}
 
-// ===== CLICK INTERACTION =====
 
-function handleSandSimulationClick(mouseX, mouseY) {
-  console.log("Sand click at:", mouseX + "," + mouseY, "Full screen area: 0,0 to", sandSimWidth + "," + sandSimHeight);
-  
-  // Check if click is within sand simulation area (now full screen)
-  if (mouseX >= 0 && mouseX <= sandSimWidth && mouseY >= 0 && mouseY <= sandSimHeight) {
-    console.log("Click inside sand area! Direct coordinates:", mouseX + "," + mouseY);
-    
-    // Spawn sand at clicked position (no coordinate conversion needed)
-    spawnSandAtPosition(mouseX, mouseY, currentSandType);
-    
-    console.log("Sand spawned at:", mouseX, mouseY, "Type:", currentSandType);
-  }
-}
 
 // ===== CONTROL FUNCTIONS =====
-
-function setWindIntensity(intensity) {
-  windIntensity = Math.max(0, Math.min(intensity, 1));
-}
-
-function setPlantGrowthRate(rate) {
-  plantGrowthRate = Math.max(0, Math.min(rate, 0.01));
-}
-
-function setFireSpreadRate(rate) {
-  fireSpreadRate = Math.max(0, Math.min(rate, 0.1));
-}
-
-function setSandType(type) {
-  currentSandType = type;
-}
-
-function setBrushSize(size) {
-  brushSize = Math.max(1, Math.min(size, 5));
-}
 
 function clearAllSand() {
   for (let x = 0; x < gridWidth; x++) {
@@ -400,21 +554,3 @@ function clearAllSand() {
   }
 }
 
-// ===== KEYBOARD CONTROLS =====
-function handleSandSimulationKeyPress(key) {
-  switch(key) {
-    case '1': currentSandType = 1; console.log("Sand Type: 1"); break;
-    case '2': currentSandType = 2; console.log("Sand Type: 2"); break;
-    case '3': currentSandType = 3; console.log("Sand Type: 3"); break;
-    case '4': currentSandType = 4; console.log("Sand Type: 4"); break;
-    case '5': currentSandType = 5; console.log("Sand Type: 5"); break;
-    case '6': currentSandType = 6; console.log("Sand Type: 6"); break;
-    case '7': currentSandType = 7; console.log("Sand Type: 7"); break;
-    case '8': currentSandType = 8; console.log("Sand Type: 8"); break;
-    case 'w': currentSandType = 10; console.log("Sand Type: Water"); break;
-    case 'f': currentSandType = 20; console.log("Sand Type: Fire"); break;
-    case 'c': clearAllSand(); console.log("Sand Cleared"); break;
-    case '+': brushSize = Math.min(brushSize + 1, 5); console.log("Brush Size:", brushSize); break;
-    case '-': brushSize = Math.max(brushSize - 1, 1); console.log("Brush Size:", brushSize); break;
-  }
-}

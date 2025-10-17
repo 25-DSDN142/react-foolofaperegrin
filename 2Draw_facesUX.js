@@ -32,6 +32,7 @@ function drawInteraction(faces, hands) {
     checkIfMouthOpen(face);
     if (isMouthOpen) {
       text("blah blah", face.keypoints[287].x, face.keypoints[287].y)
+      spawnWaterAtPosition(face.keypoints[275].x, face.keypoints[287].y)
     }
 
     /*

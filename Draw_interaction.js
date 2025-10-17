@@ -1,6 +1,15 @@
-// ----=  HANDS  =----
+// ----=  Images  =----
+let shovel;
+let lighter;
+let sakuraImage;
+
+
 function prepareInteraction() {
   //bgImage = loadImage('/images/background.png');
+  shovel = loadImage('/images/shovel.png');
+  lighter = loadImage('/images/lighter.png');
+  sakuraImage = loadImage('/images/sakura.png');
+  // Plant images are loaded in sand_simulation.js
 }
 
 function drawInteraction(faces, hands) {
@@ -14,16 +23,30 @@ function drawInteraction(faces, hands) {
     let hand = hands[i];
     
     let whatGesture = detectHandGesture(hand)
-    let isErasing = false; // Default to not erasing
+    let isErasing = false; 
+
+    //==SAND VARIABLES==
+
+    let sandType = 1;
+
+    //GESTURE CHECK
 
     if (whatGesture == "Open Palm") {
       isErasing = true;
     }
+    //FIRE IF PINCHING
+    if (whatGesture == "Pinch") {
+      sandType = 20;
+      isErasing = false;
+    }
+    
     if (showKeypoints) {
       drawPoints(hand)
       drawConnections(hand)
     }
     // console.log(hand);
+
+    
     
     // === HAND VARIABLES ===
     // Calculate hand center (using wrist as center point)
@@ -55,31 +78,49 @@ function drawInteraction(faces, hands) {
     */
 
 
-
+//Pouring sand
     if (isErasing == false) {
-    spawnSandAtPosition(indexFingerTipX, indexFingerTipY, Math.floor(random(1, 9)));
+      if (sandType == 1) {
+        spawnSandAtPosition(indexFingerTipX, indexFingerTipY, Math.floor(random(1, 9)));
+      }
+      else if (sandType == 20) {
+        spawnSandAtPosition(indexFingerTipX, indexFingerTipY, 20);
+        push();
+        imageMode(CENTER);
+        let imageSize = handSize * 0.6; 
+        image(lighter, indexFingerTipX, indexFingerTipY, imageSize, imageSize);
+        pop();
+      }
     }
 
+    //Erasing sand w/ shovel
     if (isErasing == true) {
       
       
-      // Map hand size to brush size (minimum 2, maximum 8)
-      let eraserBrushSize = Math.floor(map(handSize, 30, 150, 2, 8));
-      eraserBrushSize = Math.max(2, Math.min(8, eraserBrushSize)); // Clamp between 2-8
-      
-      // Temporarily set brush size for erasing
+      let eraserBrushSize = Math.floor(map(handSize, 1, 150, 2, 5));
+                    
       let originalBrushSize = brushSize;
       brushSize = eraserBrushSize;
       
       // Erase by spawning type 0 (empty) at hand center
-      spawnSandAtPosition(handCenterX, handCenterY, 0);
-      
-      // Restore original brush size
+      spawnSandAtPosition(handCenterX-30, handCenterY-30, 0);
+
+      //reset brush size - stops too much sand being spawned after erasing
       brushSize = originalBrushSize;
+      
+      // Display shovel image on palm when erasing
+      push();
+      imageMode(CENTER);
+      let imageSize = handSize * 0.6; // Scale image to hand size
+      image(shovel, handCenterX-100, handCenterY-100, imageSize, imageSize);
+      pop();
     }
-    // pinchCircle(hand)
+
+
+    /*
     fill(225, 225, 0);
     ellipse(indexFingerTipX, indexFingerTipY, 30, 30);
+    */
 
     /*
     Stop drawing on the hands here
@@ -94,7 +135,7 @@ function drawInteraction(faces, hands) {
   for (let i = 0; i < faces.length; i++) {
     let face = faces[i]; // face holds all the keypoints of the face
     if (showKeypoints) {
-      drawPoints(face)
+      //drawPoints(face)
     }
     // console.log(face);
     /*
@@ -114,18 +155,19 @@ function drawInteraction(faces, hands) {
 
     checkIfMouthOpen(face);
     if (isMouthOpen) {
-      text("blah blah", face.keypoints[287].x, face.keypoints[287].y)
-      spawnWaterAtPosition(face.keypoints[275].x, face.keypoints[287].y)
-    }
+      //text("blah blah", face.keypoints[287].x, face.keypoints[287].y)
+      spawnWaterAtPosition(face.keypoints[275].x, face.keypoints[287].y);
+      colorDriver = 1.0;
+    } else { colorDriver = 0.0; }
 
     // fill(225, 225, 0);
     // ellipse(leftEyeCenterX, leftEyeCenterY, leftEyeWidth, leftEyeHeight);
 
-    drawPoints(face.leftEye);
+    /*drawPoints(face.leftEye);
     drawPoints(face.leftEyebrow);
     drawPoints(face.lips);
     drawPoints(face.rightEye);
-    drawPoints(face.rightEyebrow);
+    drawPoints(face.rightEyebrow);*/
     /*
     Stop drawing on the face here
     */
